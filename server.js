@@ -28,9 +28,10 @@ app.post('/user/create', User.createUser);
 app.post('/session', User.login);
 // app.get('/test', JWTMiddleware.checkToken, controller!!!);
 
+// todo добавить проверку токена
 app.post('/file', File.uploadFile);
-// app.get('/file/:file_id', File.getById);
 app.delete('/file/:file_id', File.deleteFile);
-
+app.get('/file/:file_id', File.getFile);
+app.get('/file', File.getFiles);
 
 app.listen(port, () => console.log(`Server is listening on port: ${port}`));

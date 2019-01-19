@@ -19,11 +19,14 @@ const File = {
   findOneById: (file_id) => new Promise((resolve, reject) => {
 
   }),
-  findAllByArray: (file_arr = []) => new Promise((resolve, reject) => {
+  findAllByArray: (file_ids) => new Promise((resolve, reject) => {
 
+    db.query(`SELECT * FROM files WHERE id IN (${file_ids})`)
+      .then((res) => resolve(res.rows))
+      .catch((err) => reject(err))
   }),
   delete: (file_id) => new Promise((resolve, reject) => {
-    db.query('DELETE FROM files WHERE id = $1 returning id', [file_id])
+    db.query(`DELETE FROM files WHERE id = ${file_id} returning id`)
       .then((res) => res.rows[0])
       .then((id) => {
         if (!id) reject('File not found');

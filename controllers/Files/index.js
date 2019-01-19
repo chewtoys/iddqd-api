@@ -25,6 +25,22 @@ const Files = {
       }));
   },
 
+  getFile: (req, res) => {},
+
+  getFiles: (req, res) => {
+    const file_ids = req.query.id;
+
+    FileModels.findAllByArray(file_ids)
+      .then((data) => res.status(200).json({
+        success: true,
+        data
+      }))
+      .catch((err) => res.status(404).json({
+        success: false,
+        message: err
+      }));
+  },
+
   deleteFile: (req, res) => {
     FileModels.delete(Number(req.params.file_id))
       .then(() => res.status(204).send())
