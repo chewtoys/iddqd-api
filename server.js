@@ -2,11 +2,6 @@ require('dotenv').load();
 
 const express = require("express");
 const bodyParser = require('body-parser');
-const jwt = require('jsonwebtoken');
-const config = require('./config');
-const JWTMiddleware = require('./middlewares/jwt');
-
-
 
 const app = express();
 
@@ -19,6 +14,8 @@ app.use(bodyParser.json());
 
 const User = require('./controllers/Users');
 
-app.post('/user', User.createUser);
+app.post('/user/create', User.createUser);
+app.post('/session', User.login);
+// app.get('/test', JWTMiddleware.checkToken, controller!!!);
 
 app.listen(port, () => console.log(`Server is listening on port: ${port}`));

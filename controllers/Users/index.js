@@ -1,14 +1,46 @@
-const User = require('../../models/Users');
+const UserModel = require('../../models/Users');
+const jwt = require('jsonwebtoken');
+const config = require('../../config');
 
-module.exports = {
+const User = {
   createUser: (req, res) => {
-    User.create(req.body)
+    UserModel.create(req.body)
       .then(({ id, name, email }) => res.status(201).json({
         message: 'User has been created',
         data: { id, name, email }
       }))
       .catch((err) => res.status(400).json({
-          message: err
+        message: err
       }));
   },
+
+  login: (req, res) => {
+    UserModel.login(req.body)
+      .then((data) => {
+        if (data.isAuthorized) {
+          let token = jwt.sign({name: data.name},
+            config.secret, {
+              expiresIn: process.env.JWT_EXPIRATION || '24h'
+            }
+          );
+          res.json({
+            success: true,
+            message: 'Authentication successful!',
+            token
+          });
+        } else {
+          res.status(403).json({
+            success: false,
+            message: 'Incorrect name or password'
+          });
+        }
+      })
+      .catch((err) => {
+        res.json({
+          message: err
+        })
+      });
+  }
 };
+
+module.exports = User;

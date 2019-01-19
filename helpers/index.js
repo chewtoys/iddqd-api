@@ -33,9 +33,17 @@ const validateUserData = (data) => new Promise((resolve, reject) => {
     .catch((err) => reject(err))
 });
 
+const verifyPassword = (password, user) => new Promise((resolve, reject) => {
+  bcrypt.compare(password, user.password, (err, result) => {
+    if (err) reject(err);
+    else resolve({ isValid: result, id: user.id });
+  });
+});
+
 module.exports = {
   validateUserData,
   validateEmail,
   validatePassword,
+  verifyPassword,
   hashPassword
 };
