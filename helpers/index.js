@@ -40,6 +40,13 @@ const verifyPassword = (password, user) => new Promise((resolve, reject) => {
   });
 });
 
+const uploadFile = (file, uploadPath) => new Promise((resolve, reject) => {
+  file.mv(uploadPath, (err) => {
+    if (err) reject(err);
+    resolve()
+  })
+});
+
 const getFileNameExt = (str) => {
   const file = str.split('/').pop();
   return file.substr(file.lastIndexOf('.')+1,file.length)
@@ -48,6 +55,7 @@ const getFileNameExt = (str) => {
 module.exports = {
   validateUserData,
   validateEmail,
+  uploadFile,
   getFileNameExt,
   validatePassword,
   verifyPassword,

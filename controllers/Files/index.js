@@ -10,22 +10,27 @@ const Files = {
 
 
     FileModels.upload(file)
-      .then((d) => {
-        console.log(d)
-      })
-      .catch((err) => {
+      .then((data) => res.status(201).json({
+        success: true,
+        message: 'File has been uploaded',
+        data: {
+          ...data,
+          created_at: +data.created_at,
+          updated_at: +data.updated_at
+        }
+      }))
+      .catch((err) => res.status(400).json({
+        success: false,
+        message: err
+      }));
+  },
 
-      })
-
-      // res.json({
-      //   success: true,
-      //   status: 'File uploaded!',
-      //   extension: '',
-      //   size: '',
-      //   original_uri: '',
-      //   created_at: ''
-      // });
-    // });
+  deleteFile: (req, res) => {
+    FileModels.delete(Number(req.params.file_id))
+      .then(() => res.status(204).send())
+      .catch((err) => res.status(400).json({
+        message: err
+      }))
   }
 };
 

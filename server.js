@@ -28,6 +28,9 @@ app.post('/user/create', User.createUser);
 app.post('/session', User.login);
 // app.get('/test', JWTMiddleware.checkToken, controller!!!);
 
-app.post('/upload', File.uploadFile);
+app.post('/file', File.uploadFile);
+// app.get('/file/:file_id', File.getById);
+app.delete('/file/:file_id', File.deleteFile);
+
 
 app.listen(port, () => console.log(`Server is listening on port: ${port}`));
