@@ -194,3 +194,5 @@ fabric.properties
 .idea/sonarlint
 
 # End of https://www.gitignore.io/api/node,venv,linux,webstorm
+
+/uploads

@@ -40,9 +40,15 @@ const verifyPassword = (password, user) => new Promise((resolve, reject) => {
   });
 });
 
+const getFileNameExt = (str) => {
+  const file = str.split('/').pop();
+  return file.substr(file.lastIndexOf('.')+1,file.length)
+};
+
 module.exports = {
   validateUserData,
   validateEmail,
+  getFileNameExt,
   validatePassword,
   verifyPassword,
   hashPassword
