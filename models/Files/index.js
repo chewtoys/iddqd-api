@@ -1,6 +1,9 @@
 const db = require('../../config/db');
 const uuidv4 = require('uuid/v4');
-const { getFileNameExt, uploadFile } = require('../../helpers');
+const {
+  getFileNameExt,
+  uploadFile
+} = require('../../helpers');
 
 const File = {
   upload: (file) => new Promise((resolve, reject) => {
@@ -17,20 +20,20 @@ const File = {
       .catch((err) => reject(err))
   }),
 
-  findOneById: (file_id) => new Promise((resolve, reject) => {
-    db.query(`SELECT * FROM files WHERE id = ${file_id}`)
+  findOneById: (id) => new Promise((resolve, reject) => {
+    db.query(`SELECT * FROM files WHERE id = ${id}`)
       .then((res) => resolve(res.rows[0]))
       .catch((err) => reject(err))
   }),
 
-  findAllByArray: (file_ids) => new Promise((resolve, reject) => {
-    db.query(`SELECT * FROM files WHERE id IN (${file_ids})`)
+  findAllByArray: (ids) => new Promise((resolve, reject) => {
+    db.query(`SELECT * FROM files WHERE id IN (${ids})`)
       .then((res) => resolve(res.rows))
       .catch((err) => reject(err))
   }),
 
-  delete: (file_id) => new Promise((resolve, reject) => {
-    db.query(`DELETE FROM files WHERE id = ${file_id} returning id`)
+  delete: (id) => new Promise((resolve, reject) => {
+    db.query(`DELETE FROM files WHERE id = ${id} returning id`)
       .then((res) => res.rows[0])
       .then((id) => {
         if (!id) reject('File not found');
