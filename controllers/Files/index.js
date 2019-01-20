@@ -8,11 +8,10 @@ const Files = {
 
     const { file } = req.files;
 
-
     FileModels.upload(file)
       .then((data) => res.status(201).json({
         success: true,
-        message: 'File has been uploaded',
+        msg: 'File has been uploaded',
         data: {
           ...data,
           created_at: +data.created_at,
@@ -21,11 +20,25 @@ const Files = {
       }))
       .catch((err) => res.status(400).json({
         success: false,
-        message: err
+        msg: err
       }));
   },
 
-  getFile: (req, res) => {},
+  getFile: (req, res) => {
+    FileModels.findOneById(req.params.file_id)
+      .then((data) => res.status(200).json({
+        success: true,
+        data: {
+          ...data,
+          created_at: +data.created_at,
+          updated_at: +data.updated_at
+        }
+      }))
+      .catch((err) => res.status(404).json({
+        success: false,
+        msg: err
+      }));
+  },
 
   getFiles: (req, res) => {
     const file_ids = req.query.id;
@@ -33,11 +46,15 @@ const Files = {
     FileModels.findAllByArray(file_ids)
       .then((data) => res.status(200).json({
         success: true,
-        data
+        data: data.map((file) => ({
+          ...file,
+          created_at: +file.created_at,
+          updated_at: +file.updated_at
+        }))
       }))
       .catch((err) => res.status(404).json({
         success: false,
-        message: err
+        msg: err
       }));
   },
 
@@ -45,7 +62,7 @@ const Files = {
     FileModels.delete(Number(req.params.file_id))
       .then(() => res.status(204).send())
       .catch((err) => res.status(400).json({
-        message: err
+        msg: err
       }))
   }
 };

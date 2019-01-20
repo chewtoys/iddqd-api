@@ -6,11 +6,11 @@ const User = {
   createUser: (req, res) => {
     UserModel.create(req.body)
       .then(({ id, name, email }) => res.status(201).json({
-        message: 'User has been created',
+        msg: 'User has been created',
         data: { id, name, email }
       }))
       .catch((err) => res.status(400).json({
-        message: err
+        msg: err
       }));
   },
 
@@ -25,19 +25,19 @@ const User = {
           );
           res.json({
             success: true,
-            message: 'Authentication successful!',
+            msg: 'Authentication successful!',
             token
           });
         } else {
           res.status(403).json({
             success: false,
-            message: 'Incorrect name or password'
+            msg: 'Incorrect name or password'
           });
         }
       })
       .catch((err) => {
         res.json({
-          message: err
+          msg: err
         })
       });
   }
