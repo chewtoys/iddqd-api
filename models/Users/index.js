@@ -36,6 +36,12 @@ const User = {
       .then((user) => verifyPassword(data.password, user.rows[0]))
       .then((res) => resolve({ isAuthorized: res.isValid, id: res.id }))
       .catch((err) => reject(err))
+  }),
+
+  addLoginSession: () => new Promise((resolve, reject) => {}),
+
+  getLoginSession: (limit = 5) => new Promise((resolve, reject) => {
+    // db.query('SELECT * FROM session_history')
   })
 };
 

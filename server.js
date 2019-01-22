@@ -25,7 +25,7 @@ app.get('/ping', (req, res) => res.status(200).json({
   msg: 'pong'
 }));
 app.post('/user/create', User.createUser);
-app.post('/session', User.login);
+app.post('/authorization', User.login);
 
 app.post('/file', JWTMiddleware.checkToken, File.uploadFile);
 app.delete('/file/:file_id', JWTMiddleware.checkToken, File.deleteFile);
@@ -39,7 +39,7 @@ app.get('/tag', Tag.getTags);
 
 const getSchema = (req, res) => {
   res.status(200).json({
-    
+
   })
 };
 

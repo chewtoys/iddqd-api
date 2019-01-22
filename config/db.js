@@ -1,11 +1,37 @@
-const { Pool } = require('pg');
+const Sequelize = require('sequelize');
 
-const pool = new Pool({
-  user: process.env.DB_USERNAME,
-  host: process.env.DB_HOST,
-  database: process.env.DB_NAME,
-  password: process.env.DB_PASSWORD,
-  port: process.env.DB_PORT || 5432,
-});
+const sequelize = new Sequelize(
+  process.env.DB_NAME, // DB name
+  process.env.DB_USERNAME, // DB user name
+  process.env.DB_PASSWORD, // DB user password
+  {
+    host: process.env.DB_HOST, // DB host
+    dialect: 'postgres', // DB type
+    operatorsAliases: false,
 
-module.exports = pool;
+    pool: {
+      max: 5,
+      min: 0,
+      acquire: 30000,
+      idle: 10000
+    },
+
+  }
+);
+const FileModel = require('../models/Files');
+const File = FileModel(sequelize, Sequelize);
+
+sequelize
+  .authenticate()
+  .then(() => {
+    console.log('Connection has been established successfully.');
+  })
+  .catch(err => {
+    console.error('Unable to connect to the database:', err);
+  });
+
+module.exports = {
+  File
+};
+
+
