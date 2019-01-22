@@ -24,13 +24,11 @@ const User = {
             }
           );
           res.json({
-            success: true,
             msg: 'Authentication successful!',
             token
           });
         } else {
           res.status(403).json({
-            success: false,
             msg: 'Incorrect name or password'
           });
         }

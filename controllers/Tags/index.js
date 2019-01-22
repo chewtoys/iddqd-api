@@ -6,7 +6,6 @@ const Tags = {
 
     TagModels.add(name)
       .then((data) => res.status(201).json({
-        success: true,
         data: {
           ...data,
           created_at: +data.created_at,
@@ -14,7 +13,6 @@ const Tags = {
         }
       }))
       .catch((err) => res.status(400).json({
-        success: false,
         msg: err
       }));
   },
@@ -22,7 +20,6 @@ const Tags = {
   getTag: (req, res) => {
     TagModels.findOneById(req.params.tag_id)
       .then((data) => res.status(200).json({
-        success: true,
         data: {
           ...data,
           created_at: +data.created_at,
@@ -40,7 +37,6 @@ const Tags = {
 
     TagModels.findByName(name)
       .then((data) => res.status(200).json({
-        success: true,
         data: data.map((tag) => ({
           ...tag,
           created_at: +tag.created_at,
@@ -48,7 +44,6 @@ const Tags = {
         }))
       }))
       .catch((err) => res.status(404).json({
-        success: false,
         msg: err
       }));
   },

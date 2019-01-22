@@ -21,7 +21,9 @@ const File = require('./controllers/Files');
 const Tag = require('./controllers/Tags');
 const JWTMiddleware = require('./middlewares/jwt');
 
-app.get('/ping', (req, res) => res.send('pong'));
+app.get('/ping', (req, res) => res.status(200).json({
+  msg: 'pong'
+}));
 app.post('/user/create', User.createUser);
 app.post('/session', User.login);
 
@@ -34,5 +36,13 @@ app.post('/tag', JWTMiddleware.checkToken, Tag.addTag);
 app.delete('/tag/:tag_id', JWTMiddleware.checkToken, Tag.deleteTag);
 app.get('/tag/:tag_id', Tag.getTag);
 app.get('/tag', Tag.getTags);
+
+const getSchema = (req, res) => {
+  res.status(200).json({
+    
+  })
+};
+
+app.get('/schema', getSchema);
 
 app.listen(port, () => console.log(`Server is listening on port: ${port}`));

@@ -10,7 +10,6 @@ const Files = {
 
     FileModels.upload(file)
       .then((data) => res.status(201).json({
-        success: true,
         msg: 'File has been uploaded',
         data: {
           ...data,
@@ -19,7 +18,6 @@ const Files = {
         }
       }))
       .catch((err) => res.status(400).json({
-        success: false,
         msg: err
       }));
   },
@@ -27,7 +25,6 @@ const Files = {
   getFile: (req, res) => {
     FileModels.findOneById(req.params.file_id)
       .then((data) => res.status(200).json({
-        success: true,
         data: {
           ...data,
           created_at: +data.created_at,
@@ -35,7 +32,6 @@ const Files = {
         }
       }))
       .catch((err) => res.status(404).json({
-        success: false,
         msg: err
       }));
   },
@@ -45,7 +41,6 @@ const Files = {
 
     FileModels.findAllByArray(file_ids)
       .then((data) => res.status(200).json({
-        success: true,
         data: data.map((file) => ({
           ...file,
           created_at: +file.created_at,
@@ -53,7 +48,6 @@ const Files = {
         }))
       }))
       .catch((err) => res.status(404).json({
-        success: false,
         msg: err
       }));
   },
