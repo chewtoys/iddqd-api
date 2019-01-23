@@ -6,6 +6,7 @@ const {
   validatePassword,
   validateComparePassword,
   verifyPassword,
+  validateLogin,
   hashPassword
 } = require('../../helpers');
 const { User } = require('../../config/db');
@@ -70,8 +71,13 @@ const Users = {
       password
     } = req.body;
 
-    const updateLastLogin = () => new Promise((resolve, reject) => {
-      User.findOne({ where: { email: data.email } })
+    validateLogin(data)
+      .then(() => updateLastLogin(email))
+      .then(() => auth(email, password))
+      .then((d) => console.log(d))
+
+    const updateLastLogin = (email) => new Promise((resolve, reject) => {
+      User.findOne({ where: { email } })
         .then((user) => {
 
           user.last_login_attempt = +moment();
@@ -81,12 +87,38 @@ const Users = {
         .catch((err) => reject(err))
     });
 
-    const LoginHandler = (data) => new Promise((resolve, reject) => {
-      if (!data.email || !data.password) reject('Email and/or password is missing');
-      else {
-        updateLastLogin()
-          .then((s) => console.log(s))
-          .catch((err) => console.log(err))
+    // const auth = (email, password) => new Promise((resolve, reject) => {
+      // User.findOne({ where: { email: data.email } })
+      //   .then((user) => verifyPassword(data.password, user))
+    // });
+
+    // const signToken = (payload, expiresIn = '1h') => jwt.sign(payload, 'secret', {
+    //   expiresIn,
+    // });
+    //
+    const auth = async (email, password) => {
+      const user = await User.findOne({ where: { email } });
+      const verify = await verifyPassword(password, user);
+
+      return {
+        isAuthorized: verify.isValid,
+        token_lifetime: user.token_lifetime,
+        id: verify.id
+      }
+    };
+
+    // const LoginHandler = (data) => new Promise((resolve, reject) => {
+    //   if (!data.email || !data.password) reject('Email and/or password is missing');
+    //   else {
+    //     Promise.all([
+    //       updateLastLogin(data.email),
+    //       auth(data.email, data.password)
+    //     ])
+        // updateLastLogin(data.email)
+          // .then((s) => console.log(s))
+          // .then(() => auth(data.email, data.password))
+          // .then((d) => console.log(d))
+          // .catch((err) => console.log(err))
         // updateLastLogin()
         // resolve((async () => {
         //   try {
@@ -111,38 +143,38 @@ const Users = {
         //   }
         //
         // })())
-      }
-    });
+    //   }
+    // });
 
-    LoginHandler(data)
-      .then((data) => {
-        if (data.isAuthorized) {
-          let token = jwt.sign({login: data.login},
-            config.secret, {
-              expiresIn: process.env.JWT_EXPIRATION || '24h'
-            }
-          );
-
-          const expiresAt = moment(new Date()).add(data.token_lifetime, 's').unix();
-
-          res.json({
-            msg: 'Authentication successful!',
-            token: {
-              token,
-              expiresAt
-            }
-          });
-        } else {
-          res.status(403).json({
-            msg: 'Incorrect login or password'
-          });
-        }
-      })
-      .catch((err) => {
-        res.json({
-          msg: err
-        })
-      });
+    // LoginHandler(data)
+    //   .then((data) => {
+    //     if (data.isAuthorized) {
+    //       let token = jwt.sign({login: data.login},
+    //         config.secret, {
+    //           expiresIn: process.env.JWT_EXPIRATION || '24h'
+    //         }
+    //       );
+    //
+    //       const expiresAt = moment(new Date()).add(data.token_lifetime, 's').unix();
+    //
+    //       res.json({
+    //         msg: 'Authentication successful!',
+    //         token: {
+    //           token,
+    //           expiresAt
+    //         }
+    //       });
+    //     } else {
+    //       res.status(403).json({
+    //         msg: 'Incorrect login or password'
+    //       });
+    //     }
+    //   })
+    //   .catch((err) => {
+    //     res.json({
+    //       msg: err
+    //     })
+    //   });
   }
 };
 

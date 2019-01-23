@@ -35,7 +35,7 @@ const validateUserData = (data) => new Promise((resolve, reject) => {
   if (!data.password || !data.email) reject('Email and/or password is missing');
   else validatePassword(data.password, 6)
     .then(() => validateEmail(data.email))
-    .then(() => resolve())
+    .then(() => resolve()) // todo добавить валидацию логина
     .catch((err) => reject(err))
 });
 
@@ -45,6 +45,14 @@ const verifyPassword = (password, user) => new Promise((resolve, reject) => {
     else resolve({ isValid: result, id: user.id });
   });
 });
+
+const validateLogin = (data) => new Promise((resolve, reject) => {
+  if (!data.password || !data.email) reject('Email and/or password is missing');
+  else validatePassword(data.password, 6)
+    .then(() => validateEmail(data.email))
+    .then(() => resolve())
+    .catch((err) => reject(err))
+})
 
 const uploadFile = (file, uploadPath) => new Promise((resolve, reject) => {
   file.mv(uploadPath, (err) => {
@@ -66,5 +74,6 @@ module.exports = {
   validatePassword,
   validateComparePassword,
   verifyPassword,
+  validateLogin,
   hashPassword
 };
