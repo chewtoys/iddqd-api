@@ -19,7 +19,10 @@ const sequelize = new Sequelize(
   }
 );
 const FileModel = require('../models/Files');
+const UserModel = require('../models/Users');
+
 const File = FileModel(sequelize, Sequelize);
+const User = UserModel(sequelize, Sequelize);
 
 sequelize
   .authenticate()
@@ -31,7 +34,8 @@ sequelize
   });
 
 module.exports = {
-  File
+  File,
+  User
 };
 
 
