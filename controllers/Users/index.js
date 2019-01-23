@@ -3,28 +3,35 @@ const config = require('../../config');
 const {
   validateUserData,
   validateEmail,
+  validatePassword,
+  validateComparePassword,
   verifyPassword,
   hashPassword
 } = require('../../helpers');
 const { User } = require('../../config/db');
 const moment = require('moment');
+const Validator = require('validator');
 
 const Users = {
   createUser: (req, res) => {
-    const data = { name, email, password } = req.body;
+    const data = {
+      login,
+      email,
+      password
+    } = req.body;
+    const current_time = +moment();
 
     validateUserData(data)
       .then(() => hashPassword(password))
       .then((hash) => User.create({
-        name,
+        login,
         email,
         password: hash,
-        created_at: +new Date,
-        updated_at: +new Date
+        created_at: current_time,
+        updated_at: current_time
       }))
       .then((data) => {
         data = data.get({ plain: true });
-        console.log(data)
         res.status(201).json({
           msg: 'User has been created',
           data: {
@@ -39,41 +46,84 @@ const Users = {
       }));
   },
 
+  changePassword: async (req, res) => {
+    const { password, confirmPassword } = req.body;
+
+    validatePassword(password)
+      .then(() => validateComparePassword(password, confirmPassword))
+      .then(() => User.findById(14))
+      .then(async (user) => {
+        user.password = await hashPassword(password);
+        user.save();
+      })
+      .then(() => res.status(200).json({
+        msg: 'Password has been changed'
+      }))
+      .catch((err) => res.json({
+        msg: err
+      }))
+  },
+
   login: (req, res) => {
-    const data = { email, password } = req.body;
+    const data = {
+      email,
+      password
+    } = req.body;
+
+    const updateLastLogin = () => new Promise((resolve, reject) => {
+      User.findOne({ where: { email: data.email } })
+        .then((user) => {
+
+          user.last_login_attempt = +moment();
+          return user.save();
+        })
+        .then(() => resolve())
+        .catch((err) => reject(err))
+    });
 
     const LoginHandler = (data) => new Promise((resolve, reject) => {
       if (!data.email || !data.password) reject('Email and/or password is missing');
       else {
-        resolve((async () => {
-          let user = await User.findOne({ where: { email: data.email } });
-
-          user.last_login_attempt = +new Date(); // update last login
-          user.save().then(() => console.log('Saving'));
-
-          user = user.get({ plain: true });
-
-          const verify = await verifyPassword(data.password, user);
-
-          return {
-            isAuthorized: verify.isValid,
-            token_lifetime: user.token_lifetime,
-            id: verify.id
-          };
-        })())
+        updateLastLogin()
+          .then((s) => console.log(s))
+          .catch((err) => console.log(err))
+        // updateLastLogin()
+        // resolve((async () => {
+        //   try {
+        //     let user = await User.findOne({ where: { email: data.email } });
+        //
+        //     user.last_login_attempt = moment().unix(); // update last login
+        //     user.save()
+        //       .then(() => console.log('Saving'))
+        //       .catch((err) => console.log(err));
+        //
+        //     user = user.get({ plain: true });
+        //
+        //     const verify = await verifyPassword(data.password, user);
+        //
+        //     return {
+        //       isAuthorized: verify.isValid,
+        //       token_lifetime: user.token_lifetime,
+        //       id: verify.id
+        //     };
+        //   } catch (e) {
+        //     console.error(e);
+        //   }
+        //
+        // })())
       }
     });
 
     LoginHandler(data)
       .then((data) => {
         if (data.isAuthorized) {
-          let token = jwt.sign({name: data.name},
+          let token = jwt.sign({login: data.login},
             config.secret, {
               expiresIn: process.env.JWT_EXPIRATION || '24h'
             }
           );
 
-          const expiresAt = moment(new Date()).add(data.token_lifetime, 's').format('DD/MM/YYYY HH/mm');
+          const expiresAt = moment(new Date()).add(data.token_lifetime, 's').unix();
 
           res.json({
             msg: 'Authentication successful!',
@@ -84,7 +134,7 @@ const Users = {
           });
         } else {
           res.status(403).json({
-            msg: 'Incorrect name or password'
+            msg: 'Incorrect login or password'
           });
         }
       })

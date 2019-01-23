@@ -1,4 +1,5 @@
 const bcrypt = require('bcrypt');
+const Validator = require('validator');
 
 const hashPassword = (password) => new Promise((resolve, reject) => {
   bcrypt.genSalt(10, (err, salt) => {
@@ -10,17 +11,22 @@ const hashPassword = (password) => new Promise((resolve, reject) => {
   })
 });
 
-const validatePassword = (password, minLength = 6) => new Promise((resolve, reject) => {
+const validatePassword = (password, min = 6, max = 64) => new Promise((resolve, reject) => {
   if (typeof password !== 'string') reject('Password must be a string');
-  else if (password.length < minLength) reject(`Password must be at least ${minLength} characters long`);
+  else if (!Validator.isLength(password, { min, max })) reject(`Password must be at least ${min} characters long and not more ${max}`);
+  else resolve();
+});
+
+const validateComparePassword = (password, confirmPassword) => new Promise((resolve, reject) => {
+  if (!confirmPassword) reject('Confirm the password');
+  else if (!Validator.equals(password, confirmPassword)) reject('Passwords do not match');
   else resolve();
 });
 
 const validateEmail = (email) => new Promise((resolve, reject) => {
   if (typeof email !== 'string') reject('Email must be a string');
   else {
-    const re = new RegExp(/[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?/);
-    if (re.test(email)) resolve();
+    if (Validator.isEmail(email)) resolve();
     else reject('Provided email doesn\'t match proper email format');
   }
 });
@@ -58,6 +64,7 @@ module.exports = {
   uploadFile,
   getFileNameExt,
   validatePassword,
+  validateComparePassword,
   verifyPassword,
   hashPassword
 };

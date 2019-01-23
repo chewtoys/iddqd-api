@@ -1,6 +1,6 @@
 const User = (sequelize, type) => {
   return sequelize.define('users', {
-    name: type.STRING,
+    login: type.STRING,
     email: type.STRING,
     password: type.STRING,
     created_at: type.DATE,

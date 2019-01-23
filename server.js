@@ -25,6 +25,7 @@ app.get('/ping', (req, res) => res.status(200).json({
   msg: 'pong'
 }));
 app.post('/user/create', User.createUser);
+app.patch('/user/password', User.changePassword);
 app.post('/authorization', User.login);
 
 app.post('/file', JWTMiddleware.checkToken, File.uploadFile);
