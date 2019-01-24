@@ -10,7 +10,6 @@ const {
   hashPassword
 } = require('../../helpers');
 const { User } = require('../../config/db');
-const moment = require('moment');
 const Validator = require('validator');
 
 const Users = {
@@ -20,7 +19,7 @@ const Users = {
       email,
       password
     } = req.body;
-    const current_time = +moment();
+    const current_time = +new Date();
 
     validateUserData(data)
       .then(() => hashPassword(password))
@@ -75,12 +74,25 @@ const Users = {
       .then(() => updateLastLogin(email))
       .then(() => auth(email, password))
       .then((d) => console.log(d))
+      .catch((d) => res.json({err: d}))
+
+    const auth = async (email, password) => {
+      const user = await User.findOne({ where: { email } });
+      const verify = await verifyPassword(password, user);
+
+      return {
+        isAuthorized: verify.isValid,
+        token_lifetime: user.token_lifetime,
+        id: verify.id
+      }
+    };
 
     const updateLastLogin = (email) => new Promise((resolve, reject) => {
       User.findOne({ where: { email } })
         .then((user) => {
+          if (!user) reject('User not found');
 
-          user.last_login_attempt = +moment();
+          user.last_login_attempt = +new Date();
           return user.save();
         })
         .then(() => resolve())
@@ -96,16 +108,7 @@ const Users = {
     //   expiresIn,
     // });
     //
-    const auth = async (email, password) => {
-      const user = await User.findOne({ where: { email } });
-      const verify = await verifyPassword(password, user);
 
-      return {
-        isAuthorized: verify.isValid,
-        token_lifetime: user.token_lifetime,
-        id: verify.id
-      }
-    };
 
     // const LoginHandler = (data) => new Promise((resolve, reject) => {
     //   if (!data.email || !data.password) reject('Email and/or password is missing');
