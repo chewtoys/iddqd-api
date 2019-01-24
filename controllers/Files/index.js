@@ -1,10 +1,10 @@
-const Op = require('sequelize').Op;
-const { File } = require('../../config/db');
-const uuidv4 = require('uuid/v4');
-const {
+import { Op } from 'sequelize';
+import DB  from '../../config/db';
+import uuidv4 from 'uuid/v4';
+import {
   getFileNameExt,
   uploadFile
-} = require('../../helpers');
+} from '../../helpers';
 
 const Files = {
   uploadFile: (req, res) => {
@@ -22,7 +22,7 @@ const Files = {
 
     uploadFile(file, uploadPath)
 
-      .then(() => File.create({
+      .then(() => DB.File.create({
         original_name: file_name,
         extension: file_extension,
         size: file_size,
@@ -48,7 +48,7 @@ const Files = {
   },
 
   getFile: (req, res) => {
-    File.findById(req.params.file_id, {
+    DB.File.findById(req.params.file_id, {
       raw: true
     })
       .then((data) => {
@@ -75,7 +75,7 @@ const Files = {
       }
     };
 
-    File.findAll({
+    DB.File.findAll({
         ...condition,
       raw: true
     })
@@ -92,7 +92,7 @@ const Files = {
   },
 
   deleteFile: (req, res) => {
-    File.destroy({
+    DB.File.destroy({
       where: {
         id: Number(req.params.file_id)
       },

@@ -1,11 +1,12 @@
-const Sequelize = require('sequelize');
+import Sequelize from 'sequelize';
+import Config from './';
 
 const sequelize = new Sequelize(
-  process.env.DB_NAME, // DB name
-  process.env.DB_USERNAME, // DB user name
-  process.env.DB_PASSWORD, // DB user password
+  Config.db_name, // DB name
+  Config.db_username, // DB user name
+  Config.db_password, // DB user password
   {
-    host: process.env.DB_HOST, // DB host
+    host: Config.db_host, // DB host
     dialect: 'postgres', // DB type
     operatorsAliases: false,
 
@@ -18,11 +19,8 @@ const sequelize = new Sequelize(
 
   }
 );
-const FileModel = require('../models/Files');
-const UserModel = require('../models/Users');
-
-const File = FileModel(sequelize, Sequelize);
-const User = UserModel(sequelize, Sequelize);
+import FileModel from '../models/Files';
+import UserModel from '../models/Users';
 
 sequelize
   .authenticate()
@@ -33,9 +31,9 @@ sequelize
     console.error('Unable to connect to the database:', err);
   });
 
-module.exports = {
-  File,
-  User
+export default {
+  File: FileModel(sequelize, Sequelize),
+  User: UserModel(sequelize, Sequelize)
 };
 
 

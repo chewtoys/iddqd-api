@@ -1,29 +1,27 @@
-const jwt = require('jsonwebtoken');
-const config = require('../../config');
-const {
+import jwt from 'jsonwebtoken';
+import {
   validateUserData,
-  validateEmail,
   validatePassword,
   validateComparePassword,
   verifyPassword,
   validateLogin,
   hashPassword
-} = require('../../helpers');
-const { User } = require('../../config/db');
-const Validator = require('validator');
+} from '../../helpers';
+import DB from '../../config/db';
+import Config from '../../config';
 
-const Users = {
+export default {
   createUser: (req, res) => {
-    const data = {
+    const {
       login,
       email,
       password
     } = req.body;
     const current_time = +new Date();
 
-    validateUserData(data)
+    validateUserData({ login, email, password })
       .then(() => hashPassword(password))
-      .then((hash) => User.create({
+      .then((hash) => DB.User.create({
         login,
         email,
         password: hash,
@@ -51,7 +49,7 @@ const Users = {
 
     validatePassword(password)
       .then(() => validateComparePassword(password, confirmPassword))
-      .then(() => User.findById(14))
+      .then(() => DB.User.findById(14))
       .then(async (user) => {
         user.password = await hashPassword(password);
         user.save();
@@ -65,30 +63,69 @@ const Users = {
   },
 
   login: (req, res) => {
-    const data = {
+    const {
       email,
       password
     } = req.body;
 
-    validateLogin(data)
+    validateLogin({ email, password })
       .then(() => updateLastLogin(email))
-      .then(() => auth(email, password))
-      .then((d) => console.log(d))
-      .catch((d) => res.json({err: d}))
+      .then(() => authentication(email, password))
+      .then((authResult) => authorization(authResult))
+      .then((result) => authorizationComplete(result))
+      .catch((err) => res.json({ err }));
 
-    const auth = async (email, password) => {
-      const user = await User.findOne({ where: { email } });
+    const authorizationComplete = (result) => {
+      res.json({
+        msg: 'Authentication successful!',
+        token: {
+          token: result.token,
+          expiresAt: result.expiresAt
+        }
+      });
+    };
+
+    const authentication = async (email, password) => {
+      const user = await DB.User.findOne({ where: { email } });
       const verify = await verifyPassword(password, user);
 
       return {
-        isAuthorized: verify.isValid,
+        login: user.login,
         token_lifetime: user.token_lifetime,
+        permissions: user.permissions,
+        isAuthorized: verify.isValid,
         id: verify.id
       }
     };
 
+    const authorization = (authData) => new Promise((resolve, reject) => {
+      const {
+        login,
+        isAuthorized,
+        token_lifetime,
+        permissions
+      } = authData;
+
+      if (isAuthorized) {
+        const current_time = new Date();
+        const expiresAt = current_time.setSeconds(current_time.getSeconds() + token_lifetime);
+        const token_payload = {
+          login,
+          permissions
+        };
+        const token = signToken(token_payload, token_lifetime);
+
+        resolve({
+          token,
+          expiresAt
+        });
+      } else {
+        reject('Incorrect login or password')
+      }
+    });
+
     const updateLastLogin = (email) => new Promise((resolve, reject) => {
-      User.findOne({ where: { email } })
+      DB.User.findOne({ where: { email } })
         .then((user) => {
           if (!user) reject('User not found');
 
@@ -99,86 +136,8 @@ const Users = {
         .catch((err) => reject(err))
     });
 
-    // const auth = (email, password) => new Promise((resolve, reject) => {
-      // User.findOne({ where: { email: data.email } })
-      //   .then((user) => verifyPassword(data.password, user))
-    // });
-
-    // const signToken = (payload, expiresIn = '1h') => jwt.sign(payload, 'secret', {
-    //   expiresIn,
-    // });
-    //
-
-
-    // const LoginHandler = (data) => new Promise((resolve, reject) => {
-    //   if (!data.email || !data.password) reject('Email and/or password is missing');
-    //   else {
-    //     Promise.all([
-    //       updateLastLogin(data.email),
-    //       auth(data.email, data.password)
-    //     ])
-        // updateLastLogin(data.email)
-          // .then((s) => console.log(s))
-          // .then(() => auth(data.email, data.password))
-          // .then((d) => console.log(d))
-          // .catch((err) => console.log(err))
-        // updateLastLogin()
-        // resolve((async () => {
-        //   try {
-        //     let user = await User.findOne({ where: { email: data.email } });
-        //
-        //     user.last_login_attempt = moment().unix(); // update last login
-        //     user.save()
-        //       .then(() => console.log('Saving'))
-        //       .catch((err) => console.log(err));
-        //
-        //     user = user.get({ plain: true });
-        //
-        //     const verify = await verifyPassword(data.password, user);
-        //
-        //     return {
-        //       isAuthorized: verify.isValid,
-        //       token_lifetime: user.token_lifetime,
-        //       id: verify.id
-        //     };
-        //   } catch (e) {
-        //     console.error(e);
-        //   }
-        //
-        // })())
-    //   }
-    // });
-
-    // LoginHandler(data)
-    //   .then((data) => {
-    //     if (data.isAuthorized) {
-    //       let token = jwt.sign({login: data.login},
-    //         config.secret, {
-    //           expiresIn: process.env.JWT_EXPIRATION || '24h'
-    //         }
-    //       );
-    //
-    //       const expiresAt = moment(new Date()).add(data.token_lifetime, 's').unix();
-    //
-    //       res.json({
-    //         msg: 'Authentication successful!',
-    //         token: {
-    //           token,
-    //           expiresAt
-    //         }
-    //       });
-    //     } else {
-    //       res.status(403).json({
-    //         msg: 'Incorrect login or password'
-    //       });
-    //     }
-    //   })
-    //   .catch((err) => {
-    //     res.json({
-    //       msg: err
-    //     })
-    //   });
+    const signToken = (payload, expiresIn = '4h') => jwt.sign(payload, Config.jwt_secret, {
+      expiresIn,
+    });
   }
 };
-
-module.exports = Users;

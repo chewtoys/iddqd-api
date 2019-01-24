@@ -1,4 +1,4 @@
-const File = (sequelize, type) => {
+export default (sequelize, type) => {
   return sequelize.define('files', {
     original_name: type.STRING,
     extension: type.STRING,
@@ -12,5 +12,3 @@ const File = (sequelize, type) => {
     createdAt: 'created_at'
   })
 };
-
-module.exports = File;
