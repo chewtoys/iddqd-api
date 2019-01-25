@@ -31,14 +31,14 @@ app.post('/user/session', User.login);
 // app.get('/tag/:tag_id', Tag.getTag);
 // app.get('/tag', Tag.getTags);
 
-app.get('/permission', (req, res) => {});
+// app.get('/permission', (req, res) => {});
 
-const getSchema = (req, res) => {
-  res.status(200).json({
-
-  })
-};
-
-app.get('/schema', getSchema);
+// const getSchema = (req, res) => {
+//   res.status(200).json({
+//
+//   })
+// };
+//
+// app.get('/schema', getSchema);
 
 app.listen(Config.port, () => console.log(`Server is listening on port: ${Config.port}`));

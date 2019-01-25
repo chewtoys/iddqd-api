@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "yarn nodemon --exec babel-node ./server.js"
+    "start": "yarn nodemon --exec babel-node src/server.js"
   },
   "author": "",
   "license": "ISC",
@@ -18,7 +18,9 @@
     "nodemon": "^1.18.9",
     "pg": "^7.8.0",
     "pg-hstore": "^2.3.2",
+    "redis": "^2.8.0",
     "sequelize": "^4.42.0",
+    "typescript": "^3.2.4",
     "uuid": "^3.3.2",
     "validator": "^10.11.0"
   },
