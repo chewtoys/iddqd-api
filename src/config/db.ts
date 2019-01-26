@@ -19,7 +19,7 @@ const sequelize = new Sequelize(
 
   }
 );
-import FileModel from '../models/Files';
+// import FileModel from '../models/Files';
 import UserModel from '../models/Users';
 
 sequelize
@@ -32,7 +32,7 @@ sequelize
   });
 
 export default {
-  File: FileModel(sequelize, Sequelize),
+  // File: FileModel(sequelize, Sequelize),
   User: UserModel(sequelize, Sequelize)
 };
 
