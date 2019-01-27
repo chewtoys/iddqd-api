@@ -1,5 +1,8 @@
 import jwt from "jsonwebtoken";
-import { verifyPassword, hashPassword } from "../../helpers";
+import {
+  verifyPassword,
+  hashPassword
+} from "../../helpers";
 import {
   validateUserData,
   validatePassword,
@@ -7,24 +10,44 @@ import {
 } from "../../helpers/validators";
 import DB from "../../config/db";
 import statusCodes from "../../config/statusCodes";
-import { redisDelAsync, redisKeysAsync, redisSetAsync } from "../../config/redis";
+import {
+  redisDelAsync,
+  redisKeysAsync,
+  redisSetAsync
+} from "../../config/redis";
 import uuid from "uuid/v4";
 
 class AuthError extends Error {
   msg: string;
   status: number;
+
   constructor(msg: string = "Auth Error", status: number = statusCodes.INTERNAL_SERVER_ERROR) {
     super();
+
     this.msg = msg;
     this.status = status;
     this.name = this.constructor.name;
+
     Error.captureStackTrace(this, this.constructor);
   }
 }
 
+type TUser = {
+  body: {
+    login?: string
+    password?: string
+    email?: string
+    confirmPassword?: string
+  }
+}
+
 export default {
-  createUser: (req, res) => {
-    const { login, email, password } = req.body;
+  createUser: (req: TUser, res) => {
+    const {
+      login,
+      email,
+      password
+    } = req.body;
     const currentTime = +new Date();
 
     validateUserData({ login, email, password })
@@ -56,8 +79,11 @@ export default {
       );
   },
 
-  changePassword: async (req, res) => {
-    const { password, confirmPassword } = req.body;
+  changePassword: async (req: TUser, res) => {
+    const {
+      password,
+      confirmPassword
+    } = req.body;
     // todo добавить смену токена
     validatePassword(password)
       .then(() => validateComparePassword(password, confirmPassword))
@@ -86,7 +112,7 @@ export default {
         })
       )
       .catch(() =>
-        res.json({
+        res.status(500).json({
           msg: "Error"
         })
       );
@@ -107,14 +133,17 @@ export default {
       );
   },
 
-  login: (req, res) => {
-    const { email, password } = req.body;
+  login: (req: TUser, res) => {
+    const {
+      email,
+      password
+    } = req.body;
 
     const generateSessionKey = (userId: number): string => `${userId}:${uuid()}`;
 
     (async () => {
       try {
-        const user = await DB.User.findOne({
+        const user: any = await DB.User.findOne({
           where: {
             email
           }
@@ -138,7 +167,7 @@ export default {
           } = user;
 
           const secretVal: string = uuid();
-          const sessionKey = generateSessionKey(userId);
+          const sessionKey: string = generateSessionKey(userId);
 
           await redisSetAsync(sessionKey, secretVal, "EX", Number(userTokenLifetime));
 

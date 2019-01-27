@@ -1,7 +1,7 @@
 import express, { Express as IExpress } from "express";
 import bodyParser from "body-parser";
 import fileUpload from "express-fileupload";
-import router from "./router";
+import routes from "./routes";
 
 const app: IExpress = express();
 
@@ -13,6 +13,6 @@ app.use(
 );
 app.use(bodyParser.json());
 
-app.use(router);
+app.use(routes);
 
 export default app;
