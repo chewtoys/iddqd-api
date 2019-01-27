@@ -15,15 +15,10 @@ type User = {
   password: string
 }
 
-type Verify = {
-  isValid: boolean
-  id: number
-}
-
-export const verifyPassword = (password: string, user: User): Promise<Verify> => new Promise((resolve, reject) => {
+export const verifyPassword = (password: string, user: User): Promise<boolean> => new Promise((resolve, reject) => {
   bcrypt.compare(password, user.password, (err, result) => {
     if (err) reject(err);
-    else resolve({ isValid: result, id: user.id });
+    else resolve(Boolean(result));
   });
 });
 

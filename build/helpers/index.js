@@ -22,7 +22,7 @@ exports.verifyPassword = (password, user) => new Promise((resolve, reject) => {
         if (err)
             reject(err);
         else
-            resolve({ isValid: result, id: user.id });
+            resolve(Boolean(result));
     });
 });
 exports.uploadFile = (file, uploadPath) => new Promise((resolve, reject) => {

@@ -22,7 +22,7 @@ const checkToken = (req, res, next) => {
     let tokenNotFound = true;
     const decode = jwt.decode(token);
 
-    redisKeysAsync(`${decode.user_id}:*`)
+    redisKeysAsync(`${decode.userId}:*`)
       .then(async (userKeys) => {
         if (userKeys.length === 0) {
           res.json({
@@ -30,7 +30,6 @@ const checkToken = (req, res, next) => {
             msg: 'Token is not valid'
           });
         }
-
 
         for (const userKey of userKeys) {
             const secret = await redisGetAsync(userKey);
@@ -55,7 +54,7 @@ const checkToken = (req, res, next) => {
         }
       })
       .catch((e) => {
-        // console.log('err', e)
+        console.log(e)
       })
   } else {
     return res.status(403).json({

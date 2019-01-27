@@ -77,7 +77,7 @@ export default {
   },
 
   logout: (req, res) => {
-    redisDelAsync(req.decoded.secret_key)
+    redisDelAsync(req.decoded.sessionKey)
       .then(() => res.json({
         msg: 'Ok'
       }))
@@ -103,39 +103,47 @@ export default {
       password
     } = req.body;
 
-    const test = async () => {
+    const generateSessionKey = (user_id: number): string => `${user_id}:${uuid()}`;
+
+    (async () => {
       try {
         const user = await DB.User.findOne({
           where: {
             email
           }
         });
-        const current_time: Date = new Date();
 
         if (!user) throw new AuthError('User not found', 404);
 
-        const verify: any = await verifyPassword(password, user); // todo добавить типы
+        const current_time: Date = new Date();
 
-        const secretKey: string = uuid();
-        const secretVal: string = uuid();
-        const userSecretKey = `${user.id}:${secretKey}`;
-
-        await redisSetAsync(userSecretKey, secretVal);
+        const isVerifyPassword: boolean = await verifyPassword(password, user);
 
         user.last_login_attempt = +current_time;
         await user.save();
 
-        if (verify.isValid) {
+        if (isVerifyPassword) {
+          const {
+            permissions: userPermissions,
+            login: userLogin,
+            id: userId,
+            token_lifetime: userTokenLifetime
+          } = user;
 
-          const expiresAt: number = Math.round(new Date().getTime() / 1000) + Number(user.token_lifetime); // unix
+          const secretVal: string = uuid();
+          const sessionKey = generateSessionKey(userId);
+
+          await redisSetAsync(sessionKey, secretVal, 'EX', Number(userTokenLifetime));
+
+          const expiresAt: number = Math.round(new Date().getTime() / 1000) + Number(userTokenLifetime); // unix
 
           const token: string = jwt.sign({
-            secret_key: userSecretKey,
-            user_id: user.id,
-            login: user.login,
-            permissions: user.permissions
+            sessionKey,
+            userId,
+            userLogin,
+            userPermissions
           }, secretVal, {
-            expiresIn: Number(user.token_lifetime),
+            expiresIn: Number(userTokenLifetime),
           });
 
           authorizationComplete({ token, expiresAt })
@@ -148,9 +156,7 @@ export default {
         })
       }
 
-    };
-
-    test()
+    })();
 
     const authorizationComplete = (result) => {
       res.json({

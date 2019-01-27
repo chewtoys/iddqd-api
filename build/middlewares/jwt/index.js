@@ -26,7 +26,7 @@ const checkToken = (req, res, next) => {
         }
         let tokenNotFound = true;
         const decode = jsonwebtoken_1.default.decode(token);
-        redis_1.redisKeysAsync(`${decode.user_id}:*`)
+        redis_1.redisKeysAsync(`${decode.userId}:*`)
             .then((userKeys) => __awaiter(this, void 0, void 0, function* () {
             if (userKeys.length === 0) {
                 res.json({
@@ -54,7 +54,7 @@ const checkToken = (req, res, next) => {
             }
         }))
             .catch((e) => {
-            // console.log('err', e)
+            console.log(e);
         });
     }
     else {
