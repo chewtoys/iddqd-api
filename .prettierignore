@@ -1,0 +1,11 @@
+venv
+build/
+node_modules
+node_modules/**
+package-lock.json
+yarn.lock
+package.json
+npm-debug.log/
+tmp
+.vscode/
+.idea/

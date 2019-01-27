@@ -9,20 +9,25 @@ import {
   validateComparePassword,
 } from '../../helpers/validators';
 import DB from '../../config/db';
-import redis, { redisDelAsync, redisGetAsync, redisKeysAsync, redisSetAsync } from '../../config/redis';
+import statusCodes from '../../config/statusCodes';
+import {
+  redisDelAsync,
+  redisKeysAsync,
+  redisSetAsync
+} from '../../config/redis';
 import uuid from 'uuid/v4';
 
 class AuthError extends Error {
     msg: string;
     status: number;
-    constructor (msg = 'Auth Error', status = 500) {
+    constructor (msg = 'Auth Error', status = statusCodes.INTERNAL_SERVER_ERROR) {
         super();
         this.msg = msg;
         this.status = status;
         this.name = this.constructor.name;
         Error.captureStackTrace(this, this.constructor);
     }
-};
+}
 
 export default {
   createUser: (req, res) => {
@@ -51,7 +56,7 @@ export default {
             created_at: +data.created_at,
             updated_at: +data.updated_at
           }
-        })
+        });
       })
       .catch((err) => res.status(400).json({
         msg: err
@@ -73,7 +78,7 @@ export default {
       }))
       .catch((err) => res.json({
         msg: err
-      }))
+      }));
   },
 
   logout: (req, res) => {
@@ -83,7 +88,7 @@ export default {
       }))
       .catch(() => res.json({
         msg: 'Error'
-      }))
+      }));
   },
 
   logoutOfAllSessions: (req, res) => {
@@ -94,7 +99,7 @@ export default {
       }))
       .catch(() => res.json({
         msg: 'Error'
-      }))
+      }));
   },
 
   login: (req, res) => {
@@ -113,7 +118,7 @@ export default {
           }
         });
 
-        if (!user) throw new AuthError('User not found', 404);
+        if (!user) throw new AuthError('User not found', statusCodes.NOT_FOUND);
 
         const current_time: Date = new Date();
 
@@ -146,14 +151,14 @@ export default {
             expiresIn: Number(userTokenLifetime),
           });
 
-          authorizationComplete({ token, expiresAt })
+          authorizationComplete({ token, expiresAt });
         } else {
-          throw new AuthError('Incorrect login or password', 403);
+          throw new AuthError('Incorrect login or password', statusCodes.FORBIDDEN);
         }
       } catch (err) {
         res.status(err.status).json({
           msg: err.msg
-        })
+        });
       }
 
     })();

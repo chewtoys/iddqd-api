@@ -11,7 +11,13 @@
     "start": "yarn serve",
     "serve": "node build/server.js",
     "watch:node": "nodemon build/server.js",
-    "watch:ts": "tsc -w"
+    "watch:ts": "tsc -w",
+    "prettier:base": "./node_modules/.bin/prettier --config .prettierrc",
+    "prettier:all": "yarn prettier:base --write \"**/*.{js,jsx,ts,tsx,json}\"",
+    "prettier:ts": "yarn prettier:base --write \"**/*.{ts,tsx}\"",
+    "prettier:js": "yarn prettier:base --write \"**/*.{js,jsx}\"",
+    "prettier:json": "yarn prettier:base --write *.json",
+    "tslint": "./node_modules/.bin/tslint --config tslint.json --project tsconfig.json"
   },
   "author": "Anoma1y",
   "license": "ISC",
@@ -32,6 +38,7 @@
   },
   "devDependencies": {
     "@types/express": "^4.16.1",
+    "prettier": "^1.16.1",
     "tslint": "^5.12.1",
     "typescript": "^3.2.4"
   }
