@@ -1,24 +1,27 @@
 import jwt from 'jsonwebtoken';
 import {
+  verifyPassword,
+  hashPassword
+} from '../../helpers';
+import {
   validateUserData,
   validatePassword,
   validateComparePassword,
-  verifyPassword,
-  validateLogin,
-  hashPassword
-} from '../../helpers';
+} from '../../helpers/validators';
 import DB from '../../config/db';
-import redis, { redisGetAsync, redisSetAsync } from '../../config/redis';
+import redis, { redisDelAsync, redisGetAsync, redisKeysAsync, redisSetAsync } from '../../config/redis';
 import uuid from 'uuid/v4';
 
 class AuthError extends Error {
-  constructor (msg = 'Auth Error', status = 500) {
-    super();
-    this.msg = msg;
-    this.status = status;
-    this.name = this.constructor.name;
-    Error.captureStackTrace(this, this.constructor);
-  }
+    msg: string;
+    status: number;
+    constructor (msg = 'Auth Error', status = 500) {
+        super();
+        this.msg = msg;
+        this.status = status;
+        this.name = this.constructor.name;
+        Error.captureStackTrace(this, this.constructor);
+    }
 };
 
 export default {
@@ -73,40 +76,74 @@ export default {
       }))
   },
 
+  logout: (req, res) => {
+    redisDelAsync(req.decoded.sessionKey)
+      .then(() => res.json({
+        msg: 'Ok'
+      }))
+      .catch(() => res.json({
+        msg: 'Error'
+      }))
+  },
+
+  logoutOfAllSessions: (req, res) => {
+    redisKeysAsync(`${req.decoded.user_id}:*`)
+      .then((resp) => Promise.all((resp.map(it => redisDelAsync(it)))))
+      .then(() => res.json({
+        msg: 'Ok'
+      }))
+      .catch(() => res.json({
+        msg: 'Error'
+      }))
+  },
+
   login: (req, res) => {
     const {
       email,
       password
     } = req.body;
 
-    const test = async () => {
+    const generateSessionKey = (user_id: number): string => `${user_id}:${uuid()}`;
+
+    (async () => {
       try {
         const user = await DB.User.findOne({
           where: {
             email
           }
         });
-        const current_time = new Date();
 
         if (!user) throw new AuthError('User not found', 404);
 
-        const verify = await verifyPassword(password, user);
+        const current_time: Date = new Date();
 
-        const secretKey = uuid();
-        const secretVal = uuid();
-
-        await redisSetAsync(`${user.id}:${secretKey}`, secretVal);
+        const isVerifyPassword: boolean = await verifyPassword(password, user);
 
         user.last_login_attempt = +current_time;
         await user.save();
 
-        if (verify.isValid) {
-          const expiresAt = current_time.setSeconds(current_time.getSeconds() + user.token_lifetime);
-          const token = jwt.sign({
-            login: user.login,
-            permissions: user.permissions
+        if (isVerifyPassword) {
+          const {
+            permissions: userPermissions,
+            login: userLogin,
+            id: userId,
+            token_lifetime: userTokenLifetime
+          } = user;
+
+          const secretVal: string = uuid();
+          const sessionKey = generateSessionKey(userId);
+
+          await redisSetAsync(sessionKey, secretVal, 'EX', Number(userTokenLifetime));
+
+          const expiresAt: number = Math.round(new Date().getTime() / 1000) + Number(userTokenLifetime); // unix
+
+          const token: string = jwt.sign({
+            sessionKey,
+            userId,
+            userLogin,
+            userPermissions
           }, secretVal, {
-            expiresIn: user.token_lifetime,
+            expiresIn: Number(userTokenLifetime),
           });
 
           authorizationComplete({ token, expiresAt })
@@ -119,9 +156,7 @@ export default {
         })
       }
 
-    };
-
-    test()
+    })();
 
     const authorizationComplete = (result) => {
       res.json({
