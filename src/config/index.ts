@@ -1,6 +1,6 @@
-import dotenv from 'dotenv'
+import dotenv from "dotenv";
 dotenv.config({ silent: true });
-console.log(process.env.PORT)
+
 export default {
   db_name: process.env.DB_NAME,
   db_username: process.env.DB_USERNAME,

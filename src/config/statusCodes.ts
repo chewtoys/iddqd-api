@@ -1,6 +1,6 @@
 type IStatusCode = {
-  [key: string]: number
-}
+  [key: string]: number;
+};
 
 const statusCodes: IStatusCode = {
   ACCEPTED: 202,

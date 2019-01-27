@@ -1,56 +1,47 @@
-import jwt from 'jsonwebtoken';
-import {
-  verifyPassword,
-  hashPassword
-} from '../../helpers';
+import jwt from "jsonwebtoken";
+import { verifyPassword, hashPassword } from "../../helpers";
 import {
   validateUserData,
   validatePassword,
-  validateComparePassword,
-} from '../../helpers/validators';
-import DB from '../../config/db';
-import statusCodes from '../../config/statusCodes';
-import {
-  redisDelAsync,
-  redisKeysAsync,
-  redisSetAsync
-} from '../../config/redis';
-import uuid from 'uuid/v4';
+  validateComparePassword
+} from "../../helpers/validators";
+import DB from "../../config/db";
+import statusCodes from "../../config/statusCodes";
+import { redisDelAsync, redisKeysAsync, redisSetAsync } from "../../config/redis";
+import uuid from "uuid/v4";
 
 class AuthError extends Error {
-    msg: string;
-    status: number;
-    constructor (msg = 'Auth Error', status = statusCodes.INTERNAL_SERVER_ERROR) {
-        super();
-        this.msg = msg;
-        this.status = status;
-        this.name = this.constructor.name;
-        Error.captureStackTrace(this, this.constructor);
-    }
+  msg: string;
+  status: number;
+  constructor(msg: string = "Auth Error", status: number = statusCodes.INTERNAL_SERVER_ERROR) {
+    super();
+    this.msg = msg;
+    this.status = status;
+    this.name = this.constructor.name;
+    Error.captureStackTrace(this, this.constructor);
+  }
 }
 
 export default {
   createUser: (req, res) => {
-    const {
-      login,
-      email,
-      password
-    } = req.body;
-    const current_time = +new Date();
+    const { login, email, password } = req.body;
+    const currentTime = +new Date();
 
     validateUserData({ login, email, password })
       .then(() => hashPassword(password))
-      .then((hash) => DB.User.create({
-        login,
-        email,
-        password: hash,
-        created_at: current_time,
-        updated_at: current_time
-      }))
+      .then((hash) =>
+        DB.User.create({
+          login,
+          email,
+          password: hash,
+          created_at: currentTime,
+          updated_at: currentTime
+        })
+      )
       .then((data) => {
         data = data.get({ plain: true });
         res.status(201).json({
-          msg: 'User has been created',
+          msg: "User has been created",
           data: {
             ...data,
             created_at: +data.created_at,
@@ -58,9 +49,11 @@ export default {
           }
         });
       })
-      .catch((err) => res.status(400).json({
-        msg: err
-      }));
+      .catch((err) =>
+        res.status(400).json({
+          msg: err
+        })
+      );
   },
 
   changePassword: async (req, res) => {
@@ -73,42 +66,51 @@ export default {
         user.password = await hashPassword(password);
         user.save();
       })
-      .then(() => res.status(200).json({
-        msg: 'Password has been changed'
-      }))
-      .catch((err) => res.json({
-        msg: err
-      }));
+      .then(() =>
+        res.status(200).json({
+          msg: "Password has been changed"
+        })
+      )
+      .catch((err) =>
+        res.json({
+          msg: err
+        })
+      );
   },
 
   logout: (req, res) => {
     redisDelAsync(req.decoded.sessionKey)
-      .then(() => res.json({
-        msg: 'Ok'
-      }))
-      .catch(() => res.json({
-        msg: 'Error'
-      }));
+      .then(() =>
+        res.json({
+          msg: "Ok"
+        })
+      )
+      .catch(() =>
+        res.json({
+          msg: "Error"
+        })
+      );
   },
 
   logoutOfAllSessions: (req, res) => {
-    redisKeysAsync(`${req.decoded.user_id}:*`)
-      .then((resp) => Promise.all((resp.map(it => redisDelAsync(it)))))
-      .then(() => res.json({
-        msg: 'Ok'
-      }))
-      .catch(() => res.json({
-        msg: 'Error'
-      }));
+    redisKeysAsync(`${req.decoded.userId}:*`)
+      .then((resp) => Promise.all(resp.map((it) => redisDelAsync(it))))
+      .then(() =>
+        res.json({
+          msg: "Ok"
+        })
+      )
+      .catch(() =>
+        res.json({
+          msg: "Error"
+        })
+      );
   },
 
   login: (req, res) => {
-    const {
-      email,
-      password
-    } = req.body;
+    const { email, password } = req.body;
 
-    const generateSessionKey = (user_id: number): string => `${user_id}:${uuid()}`;
+    const generateSessionKey = (userId: number): string => `${userId}:${uuid()}`;
 
     (async () => {
       try {
@@ -118,13 +120,13 @@ export default {
           }
         });
 
-        if (!user) throw new AuthError('User not found', statusCodes.NOT_FOUND);
+        if (!user) throw new AuthError("User not found", statusCodes.NOT_FOUND);
 
-        const current_time: Date = new Date();
+        const currentTime: Date = new Date();
 
         const isVerifyPassword: boolean = await verifyPassword(password, user);
 
-        user.last_login_attempt = +current_time;
+        user.last_login_attempt = +currentTime;
         await user.save();
 
         if (isVerifyPassword) {
@@ -138,34 +140,38 @@ export default {
           const secretVal: string = uuid();
           const sessionKey = generateSessionKey(userId);
 
-          await redisSetAsync(sessionKey, secretVal, 'EX', Number(userTokenLifetime));
+          await redisSetAsync(sessionKey, secretVal, "EX", Number(userTokenLifetime));
 
-          const expiresAt: number = Math.round(new Date().getTime() / 1000) + Number(userTokenLifetime); // unix
+          const expiresAt: number =
+            Math.round(new Date().getTime() / 1000) + Number(userTokenLifetime); // unix
 
-          const token: string = jwt.sign({
-            sessionKey,
-            userId,
-            userLogin,
-            userPermissions
-          }, secretVal, {
-            expiresIn: Number(userTokenLifetime),
-          });
+          const token: string = jwt.sign(
+            {
+              sessionKey,
+              userId,
+              userLogin,
+              userPermissions
+            },
+            secretVal,
+            {
+              expiresIn: Number(userTokenLifetime)
+            }
+          );
 
           authorizationComplete({ token, expiresAt });
         } else {
-          throw new AuthError('Incorrect login or password', statusCodes.FORBIDDEN);
+          throw new AuthError("Incorrect login or password", statusCodes.FORBIDDEN);
         }
       } catch (err) {
         res.status(err.status).json({
           msg: err.msg
         });
       }
-
     })();
 
     const authorizationComplete = (result) => {
       res.json({
-        msg: 'Authentication successful!',
+        msg: "Authentication successful!",
         token: {
           token: result.token,
           expiresAt: result.expiresAt

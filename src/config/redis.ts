@@ -1,9 +1,9 @@
-import redis from 'redis';
-import { promisify } from 'util';
+import redis from "redis";
+import { promisify } from "util";
 
 const client = redis.createClient();
 
-client.on("error", (err) =>{
+client.on("error", (err) => {
   console.log("Error " + err);
 });
 
@@ -17,6 +17,6 @@ export {
   setAsync as redisSetAsync,
   keysAsync as redisKeysAsync,
   delAsync as redisDelAsync
-}
+};
 
 export default client;
