@@ -1,27 +1,17 @@
 import Validator from "validator";
 
-export const validatePassword = (
-  password: string,
-  min: number = 6,
-  max: number = 64
-): Promise<void> =>
+export const validatePassword = (password: string, min: number = 6, max: number = 64): Promise<void> =>
   new Promise((resolve, reject) => {
     if (typeof password !== "string") reject("Password must be a string");
     else if (!Validator.isLength(password, { min, max }))
-      reject(
-        `Password must be at least ${min} characters long and not more ${max}`
-      );
+      reject(`Password must be at least ${min} characters long and not more ${max}`);
     else resolve();
   });
 
-export const validateComparePassword = (
-  password: string,
-  confirmPassword: string
-): Promise<void> =>
+export const validateComparePassword = (password: string, confirmPassword: string): Promise<void> =>
   new Promise((resolve, reject) => {
     if (!confirmPassword) reject("Confirm the password");
-    else if (!Validator.equals(password, confirmPassword))
-      reject("Passwords do not match");
+    else if (!Validator.equals(password, confirmPassword)) reject("Passwords do not match");
     else resolve();
   });
 
@@ -42,8 +32,7 @@ type UserData = {
 
 export const validateUserData = (data: UserData): Promise<void> =>
   new Promise((resolve, reject) => {
-    if (!data.password || !data.email)
-      reject("Email and/or password is missing");
+    if (!data.password || !data.email) reject("Email and/or password is missing");
     else
       validatePassword(data.password, 6)
         .then(() => validateEmail(data.email))
@@ -53,8 +42,7 @@ export const validateUserData = (data: UserData): Promise<void> =>
 
 export const validateLogin = (data: UserData): Promise<void> =>
   new Promise((resolve, reject) => {
-    if (!data.password || !data.email)
-      reject("Email and/or password is missing");
+    if (!data.password || !data.email) reject("Email and/or password is missing");
     else
       validatePassword(data.password, 6)
         .then(() => validateEmail(data.email))

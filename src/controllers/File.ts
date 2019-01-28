@@ -1,7 +1,7 @@
 import { Op } from "sequelize";
-import DB from "../../config/db";
+import DB from "../config/db";
 import uuidv4 from "uuid/v4";
-import { getFileNameExt, uploadFile } from "../../helpers";
+import { getFileNameExt, uploadFile } from "../helpers";
 
 const Files = {
   uploadFile: (req, res) => {

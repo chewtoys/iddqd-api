@@ -17,8 +17,7 @@ const checkToken = async (req, res, next) => {
       const secret = await redisGetAsync(decode.sessionKey);
 
       jwt.verify(token, secret, (err, verifyDecoded) => {
-        if (err)
-          throw new HttpError("Token is not valid", statusCodes.FORBIDDEN);
+        if (err) throw new HttpError("Token is not valid", statusCodes.FORBIDDEN);
 
         if (verifyDecoded) {
           req.decoded = verifyDecoded;

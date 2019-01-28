@@ -12,15 +12,17 @@ export const hashPassword = (password: string): Promise<string> =>
     });
   });
 
-export const verifyPassword = (
-  password: string,
-  userPassword: string
-): Promise<boolean> =>
+export const verifyPassword = (password: string, userPassword: string): Promise<boolean> =>
   new Promise((resolve, reject) => {
     bcrypt.compare(password, userPassword, (err, result) => {
       if (err) reject(err);
       else resolve(Boolean(result));
     });
+  });
+
+export const validateOldPassword = (newPassword, oldPassword) =>
+  new Promise((resolve, reject) => {
+    // bcrypt.
   });
 
 export const uploadFile = (file: any, uploadPath: string): Promise<void> =>

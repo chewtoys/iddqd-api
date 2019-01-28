@@ -12,11 +12,6 @@ const delAsync = promisify(client.del).bind(client);
 const setAsync = promisify(client.set).bind(client);
 const keysAsync = promisify(client.keys).bind(client);
 
-export {
-  getAsync as redisGetAsync,
-  setAsync as redisSetAsync,
-  keysAsync as redisKeysAsync,
-  delAsync as redisDelAsync
-};
+export { getAsync as redisGetAsync, setAsync as redisSetAsync, keysAsync as redisKeysAsync, delAsync as redisDelAsync };
 
 export default client;

@@ -15,13 +15,9 @@ export type TToken = {
   expiresAt: number;
 };
 
-export const generateSessionKey = (userId: number): string =>
-  `${userId}:${uuid()}`;
+export const generateSessionKey = (userId: number): string => `session:${userId}:${uuid()}`;
 
-export const generateJWT = (
-  payload: TTokenPayload,
-  lifeTime: number = Number(Config.jwt_lifetime)
-): Promise<TToken> =>
+export const generateJWT = (payload: TTokenPayload, lifeTime: number = Number(Config.jwt_lifetime)): Promise<TToken> =>
   new Promise((resolve, reject) => {
     const tokenLifeTime: number = Number(lifeTime);
     const secretVal: string = uuid();
@@ -29,8 +25,7 @@ export const generateJWT = (
 
     redisSetAsync(sessionKey, secretVal, "EX", tokenLifeTime)
       .then(() => {
-        const expiresAt: number =
-          Math.round(new Date().getTime() / 1000) + tokenLifeTime; // unix
+        const expiresAt: number = Math.round(new Date().getTime() / 1000) + tokenLifeTime; // unix
 
         const token: string = jwt.sign(
           {

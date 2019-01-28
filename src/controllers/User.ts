@@ -1,10 +1,10 @@
-import { verifyPassword, hashPassword } from "../../helpers";
-import { validateUserData, validatePassword } from "../../helpers/validators";
-import DB from "../../config/db";
-import { redisDelAsync, redisKeysAsync } from "../../config/redis";
-import statusCodes from "../../config/statusCodes";
-import { HttpError } from "../../errorHandler";
-import { TTokenPayload, generateJWT } from "../../helpers/jwt";
+import { verifyPassword, hashPassword } from "../helpers";
+import { validateUserData, validatePassword } from "../helpers/validators";
+import DB from "../config/db";
+import { redisDelAsync, redisKeysAsync } from "../config/redis";
+import statusCodes from "../config/statusCodes";
+import { HttpError } from "../errorHandler";
+import { TTokenPayload, generateJWT } from "../helpers/jwt";
 
 type TUser = {
   decoded: TTokenPayload;
@@ -18,6 +18,16 @@ type TUser = {
 };
 
 export default {
+  checkEmailExist: (req, res) => {
+    const { email } = req.body;
+
+    DB.User.findAll({ where: { email } })
+      .then((user) =>
+        user.length === 0 ? res.status(statusCodes.NOT_FOUND).send() : res.status(statusCodes.OK).send()
+      )
+      .catch(() => res.status(statusCodes.INTERNAL_SERVER_ERROR).send());
+  },
+
   createUser: (req: TUser, res) => {
     const { login, email, password } = req.body;
     const currentTime = +new Date();
@@ -45,9 +55,7 @@ export default {
       );
   },
 
-	resetPassword: (req, res) => {
-
-	},
+  resetPassword: (req, res) => {},
 
   changePassword: async (req: TUser, res) => {
     try {
@@ -61,6 +69,12 @@ export default {
       const verify = await verifyPassword(currentUserPassword, user.password);
 
       if (!verify) throw new HttpError("Wrong password", statusCodes.FORBIDDEN);
+
+      const oldPasswordMatch = await verifyPassword(newUserPassword, user.password);
+
+      if (oldPasswordMatch) {
+        throw new HttpError("The new password should not be equal to the old one.", statusCodes.UNPROCESSABLE_ENTITY);
+      }
 
       user.password = await hashPassword(newUserPassword);
       user.save();
@@ -119,6 +133,30 @@ export default {
       );
   },
 
+  refreshToken: async (req, res) => {
+    const { sessionKey, userId } = req.decoded;
+    const user = await DB.User.findByPk(userId);
+
+    await redisDelAsync(sessionKey);
+
+    const { token, expiresAt } = await generateJWT(
+      {
+        userPermissions: user.permissions,
+        userLogin: user.login,
+        userId: user.id
+      },
+      user.token_lifetime
+    );
+
+    return res.status(statusCodes.OK).json({
+      msg: "Token has been refreshed",
+      authorizationToken: {
+        token,
+        expiresAt
+      }
+    });
+  },
+
   login: (req: TUser, res) => {
     const { email, password } = req.body;
 
@@ -134,10 +172,7 @@ export default {
 
         const currentTime: Date = new Date();
 
-        const isVerifyPassword: boolean = await verifyPassword(
-          password,
-          user.password
-        );
+        const isVerifyPassword: boolean = await verifyPassword(password, user.password);
 
         user.last_login_attempt = +currentTime;
         await user.save();
@@ -152,18 +187,15 @@ export default {
             user.token_lifetime
           );
 
-					res.json({
-						msg: "Authentication successful!",
-						authorizationToken: {
-							token,
-							expiresAt
-						}
-					});
+          res.json({
+            msg: "Authentication successful!",
+            authorizationToken: {
+              token,
+              expiresAt
+            }
+          });
         } else {
-          throw new HttpError(
-            "Incorrect login or password",
-            statusCodes.FORBIDDEN
-          );
+          throw new HttpError("Incorrect login or password", statusCodes.FORBIDDEN);
         }
       } catch (err) {
         res.status(err.status).json({

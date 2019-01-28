@@ -18,8 +18,8 @@ const sequelize = new Sequelize(
     }
   }
 );
-import FileModel from "../models/Files";
-import UserModel from "../models/Users";
+import FileModel from "../models/File";
+import UserModel from "../models/User";
 
 sequelize
   .authenticate()

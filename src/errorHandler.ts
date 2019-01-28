@@ -10,10 +10,7 @@ export class HttpError extends Error {
   msg: string;
   status: number;
 
-  constructor(
-    msg: string = "Auth Error",
-    status: number = statusCodes.INTERNAL_SERVER_ERROR
-  ) {
+  constructor(msg: string = "Auth Error", status: number = statusCodes.INTERNAL_SERVER_ERROR) {
     super();
 
     this.msg = msg;
