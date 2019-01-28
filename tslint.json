@@ -12,7 +12,7 @@
     "curly": false,
     "eofline": true,
     "interface-name": [false, "always-prefix"],
-//    "semicolon": [true, "always", "ignore-bound-class-methods"],
+    //    "semicolon": [true, "always", "ignore-bound-class-methods"],
     "member-ordering": [
       true,
       {

@@ -33,12 +33,16 @@ const convertReadable = (permName) => {
 
 const convertPerms = (permNumber) => {
   if (isNaN(Number(permNumber)))
-    throw new TypeError(`Expected permissions number, and received ${typeof permNumber} instead.`);
+    throw new TypeError(
+      `Expected permissions number, and received ${typeof permNumber} instead.`
+    );
 
   const evaluatedPerms = {};
 
   for (const perm in permissions) {
-    evaluatedPerms[convertReadable(perm)] = Boolean(Number(permNumber) & permissions[perm].value);
+    evaluatedPerms[convertReadable(perm)] = Boolean(
+      Number(permNumber) & permissions[perm].value
+    );
   }
 
   return evaluatedPerms;

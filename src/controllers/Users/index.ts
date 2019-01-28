@@ -1,40 +1,27 @@
-import jwt from "jsonwebtoken";
-import {
-  verifyPassword,
-  hashPassword
-} from "../../helpers";
+import { verifyPassword, hashPassword } from "../../helpers";
 import {
   validateUserData,
   validatePassword,
   validateComparePassword
 } from "../../helpers/validators";
 import DB from "../../config/db";
-import {
-  redisDelAsync,
-  redisKeysAsync,
-  redisSetAsync
-} from "../../config/redis";
-import uuid from "uuid/v4";
-import statusCodes from '../../config/statusCodes';
-import { HttpError } from '../../errorHandler';
-
+import { redisDelAsync, redisKeysAsync } from "../../config/redis";
+import statusCodes from "../../config/statusCodes";
+import { HttpError } from "../../errorHandler";
+import { generateJWT } from "../../helpers/jwt";
 
 type TUser = {
   body: {
-    login?: string
-    password?: string
-    email?: string
-    confirmPassword?: string
-  }
-}
+    login?: string;
+    password?: string;
+    email?: string;
+    confirmPassword?: string;
+  };
+};
 
 export default {
   createUser: (req: TUser, res) => {
-    const {
-      login,
-      email,
-      password
-    } = req.body;
+    const { login, email, password } = req.body;
     const currentTime = +new Date();
 
     validateUserData({ login, email, password })
@@ -55,8 +42,8 @@ export default {
           user: {
             id: user.id,
             email: user.email,
-              login: user.login,
-          permissions: user.permissions,
+            login: user.login,
+            permissions: user.permissions,
             created_at: +user.created_at,
             updated_at: +user.updated_at
           }
@@ -70,10 +57,7 @@ export default {
   },
 
   changePassword: async (req: TUser, res) => {
-    const {
-      password,
-      confirmPassword
-    } = req.body;
+    const { password, confirmPassword } = req.body;
     // todo добавить смену токена
     validatePassword(password)
       .then(() => validateComparePassword(password, confirmPassword))
@@ -124,12 +108,7 @@ export default {
   },
 
   login: (req: TUser, res) => {
-    const {
-      email,
-      password
-    } = req.body;
-
-    const generateSessionKey = (userId: number): string => `${userId}:${uuid()}`;
+    const { email, password } = req.body;
 
     (async () => {
       try {
@@ -149,37 +128,23 @@ export default {
         await user.save();
 
         if (isVerifyPassword) {
-          const {
-            permissions: userPermissions,
-            login: userLogin,
-            id: userId,
-            token_lifetime: userTokenLifetime
-          } = user;
+          const payload = {
+            userPermissions: user.permissions,
+            userLogin: user.login,
+            userId: user.id
+          };
 
-          const secretVal: string = uuid();
-          const sessionKey: string = generateSessionKey(userId);
-
-          await redisSetAsync(sessionKey, secretVal, "EX", Number(userTokenLifetime));
-
-          const expiresAt: number =
-            Math.round(new Date().getTime() / 1000) + Number(userTokenLifetime); // unix
-
-          const token: string = jwt.sign(
-            {
-              sessionKey,
-              userId,
-              userLogin,
-              userPermissions
-            },
-            secretVal,
-            {
-              expiresIn: Number(userTokenLifetime)
-            }
+          const { token, expiresAt } = await generateJWT(
+            payload,
+            user.token_lifetime
           );
 
           authorizationComplete({ token, expiresAt });
         } else {
-          throw new HttpError("Incorrect login or password", statusCodes.FORBIDDEN);
+          throw new HttpError(
+            "Incorrect login or password",
+            statusCodes.FORBIDDEN
+          );
         }
       } catch (err) {
         res.status(err.status).json({

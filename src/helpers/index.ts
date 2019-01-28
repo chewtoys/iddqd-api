@@ -17,7 +17,10 @@ type User = {
   password: string;
 };
 
-export const verifyPassword = (password: string, user: User): Promise<boolean> =>
+export const verifyPassword = (
+  password: string,
+  user: User
+): Promise<boolean> =>
   new Promise((resolve, reject) => {
     bcrypt.compare(password, user.password, (err, result) => {
       if (err) reject(err);

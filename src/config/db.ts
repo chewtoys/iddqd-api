@@ -21,7 +21,8 @@ const sequelize = new Sequelize(
 import FileModel from "../models/Files";
 import UserModel from "../models/Users";
 
-sequelize.authenticate()
+sequelize
+  .authenticate()
   .then(() => {
     console.log("Connection has been established successfully.");
   })
