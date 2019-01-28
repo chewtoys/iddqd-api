@@ -45,6 +45,10 @@ export default {
       );
   },
 
+	resetPassword: (req, res) => {
+
+	},
+
   changePassword: async (req: TUser, res) => {
     try {
       const { newUserPassword, currentUserPassword } = req.body;

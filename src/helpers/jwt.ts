@@ -3,12 +3,6 @@ import Config from "../config";
 import jwt from "jsonwebtoken";
 import uuid from "uuid/v4";
 
-// export type TUser = {
-// 	permissions: string
-// 	login: string
-// 	id: number
-// }
-
 export type TTokenPayload = {
   sessionKey?: string;
   userPermissions: string;

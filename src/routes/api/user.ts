@@ -8,5 +8,6 @@ router.patch("/password", checkToken, User.changePassword);
 router.post("/session", User.login);
 router.delete("/logout", checkToken, User.logout);
 router.delete("/logout/all", checkToken, User.logoutOfAllSessions);
+router.delete('/password/reset', User.resetPassword);
 
 export default router;
