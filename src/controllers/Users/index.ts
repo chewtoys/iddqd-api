@@ -48,14 +48,17 @@ export default {
           updated_at: currentTime
         })
       )
-      .then((data) => {
-        data = data.get({ plain: true });
-        res.status(201).json({
+      .then((user) => {
+        user = user.get({ plain: true });
+        res.status(statusCodes.CREATED).json({
           msg: "User has been created",
-          data: {
-            ...data,
-            created_at: +data.created_at,
-            updated_at: +data.updated_at
+          user: {
+            id: user.id,
+            email: user.email,
+              login: user.login,
+          permissions: user.permissions,
+            created_at: +user.created_at,
+            updated_at: +user.updated_at
           }
         });
       })
