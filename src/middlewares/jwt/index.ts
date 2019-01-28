@@ -1,60 +1,37 @@
 import jwt from "jsonwebtoken";
-import { redisDelAsync, redisGetAsync, redisKeysAsync } from "../../config/redis";
+import { redisGetAsync } from "../../config/redis";
+import { HttpError } from '../../errorHandler';
+import statusCodes from "../../config/statusCodes";
 
-const TokenError = {
-  TOKEN_EXPIRED_ERROR: "TokenExpiredError",
-  JSON_WEB_TOKEN_ERROR: "JsonWebTokenError",
-  NOT_BEFORE_ERROR: "NotBeforeError"
-};
-
-const checkToken = (req, res, next) => {
+const checkToken = async (req, res, next) => {
   let token = req.headers["authorization"];
 
   if (token) {
-    if (token.startsWith("Bearer ")) {
-      token = token.slice(7, token.length);
-    }
-
-    let tokenNotFound = true;
-    const decode = jwt.decode(token);
-
-    redisKeysAsync(`${decode.userId}:*`)
-      .then(async (userKeys) => {
-        if (userKeys.length === 0) {
-          res.json({
-            success: false,
-            msg: "Token is not valid"
-          });
+    try {
+        if (token.startsWith("Bearer ")) {
+            token = token.slice(7, token.length);
         }
 
-        for (const userKey of userKeys) {
-          const secret = await redisGetAsync(userKey);
+        const decode = jwt.decode(token);
 
-          jwt.verify(token, secret, async (err, verifyDecoded) => {
-            if (err && err.name === TokenError.TOKEN_EXPIRED_ERROR) await redisDelAsync(userKey);
+        const secret = await redisGetAsync(decode.sessionKey);
+
+        jwt.verify(token, secret, (err, verifyDecoded) => {
+            if (err) throw new HttpError('Token is not valid', 403);
 
             if (verifyDecoded) {
-              req.decoded = verifyDecoded;
-
-              tokenNotFound = false;
-              next();
+                req.decoded = verifyDecoded;
+                next();
             }
-          });
-        }
+        })
+    } catch ({ msg, status }) {
+        return res.status(status).json({
+            msg: msg
+        })
+    }
 
-        if (tokenNotFound) {
-          return res.json({
-            success: false,
-            msg: "Token is not valid"
-          });
-        }
-      })
-      .catch((e) => {
-        console.log(e);
-      });
   } else {
-    return res.status(403).json({
-      success: false,
+    return res.status(statusCodes.FORBIDDEN).json({
       msg: "Auth token is not supplied"
     });
   }

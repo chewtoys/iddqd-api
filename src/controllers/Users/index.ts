@@ -9,28 +9,15 @@ import {
   validateComparePassword
 } from "../../helpers/validators";
 import DB from "../../config/db";
-import statusCodes from "../../config/statusCodes";
 import {
   redisDelAsync,
   redisKeysAsync,
   redisSetAsync
 } from "../../config/redis";
 import uuid from "uuid/v4";
+import statusCodes from '../../config/statusCodes';
+import { HttpError } from '../../errorHandler';
 
-class AuthError extends Error {
-  msg: string;
-  status: number;
-
-  constructor(msg: string = "Auth Error", status: number = statusCodes.INTERNAL_SERVER_ERROR) {
-    super();
-
-    this.msg = msg;
-    this.status = status;
-    this.name = this.constructor.name;
-
-    Error.captureStackTrace(this, this.constructor);
-  }
-}
 
 type TUser = {
   body: {
@@ -73,7 +60,7 @@ export default {
         });
       })
       .catch((err) =>
-        res.status(400).json({
+        res.status(statusCodes.BAD_REQUEST).json({
           msg: err
         })
       );
@@ -93,7 +80,7 @@ export default {
         user.save();
       })
       .then(() =>
-        res.status(200).json({
+        res.status(statusCodes.OK).json({
           msg: "Password has been changed"
         })
       )
@@ -112,7 +99,7 @@ export default {
         })
       )
       .catch(() =>
-        res.status(500).json({
+        res.status(statusCodes.INTERNAL_SERVER_ERROR).json({
           msg: "Error"
         })
       );
@@ -149,7 +136,7 @@ export default {
           }
         });
 
-        if (!user) throw new AuthError("User not found", statusCodes.NOT_FOUND);
+        if (!user) throw new HttpError("User not found", statusCodes.NOT_FOUND);
 
         const currentTime: Date = new Date();
 
@@ -189,7 +176,7 @@ export default {
 
           authorizationComplete({ token, expiresAt });
         } else {
-          throw new AuthError("Incorrect login or password", statusCodes.FORBIDDEN);
+          throw new HttpError("Incorrect login or password", statusCodes.FORBIDDEN);
         }
       } catch (err) {
         res.status(err.status).json({
@@ -201,7 +188,7 @@ export default {
     const authorizationComplete = (result) => {
       res.json({
         msg: "Authentication successful!",
-        token: {
+        authorizationToken: {
           token: result.token,
           expiresAt: result.expiresAt
         }
