@@ -12,17 +12,12 @@ export const hashPassword = (password: string): Promise<string> =>
     });
   });
 
-type User = {
-  id: number;
-  password: string;
-};
-
 export const verifyPassword = (
   password: string,
-  user: User
+  userPassword: string
 ): Promise<boolean> =>
   new Promise((resolve, reject) => {
-    bcrypt.compare(password, user.password, (err, result) => {
+    bcrypt.compare(password, userPassword, (err, result) => {
       if (err) reject(err);
       else resolve(Boolean(result));
     });

@@ -7,5 +7,8 @@ export default {
   db_password: process.env.DB_PASSWORD,
   db_host: process.env.DB_HOST,
 
-  port: process.env.PORT || 3000
+  port: process.env.PORT || 3000,
+
+  jwt_lifetime: process.env.JWT_LIFETIME || 3000,
+  permissions_default: 3
 };

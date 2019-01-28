@@ -1,21 +1,19 @@
 import { verifyPassword, hashPassword } from "../../helpers";
-import {
-  validateUserData,
-  validatePassword,
-  validateComparePassword
-} from "../../helpers/validators";
+import { validateUserData, validatePassword } from "../../helpers/validators";
 import DB from "../../config/db";
 import { redisDelAsync, redisKeysAsync } from "../../config/redis";
 import statusCodes from "../../config/statusCodes";
 import { HttpError } from "../../errorHandler";
-import { generateJWT } from "../../helpers/jwt";
+import { TTokenPayload, generateJWT } from "../../helpers/jwt";
 
 type TUser = {
+  decoded: TTokenPayload;
   body: {
     login?: string;
     password?: string;
     email?: string;
-    confirmPassword?: string;
+    currentUserPassword?: string;
+    newUserPassword?: string;
   };
 };
 
@@ -35,20 +33,11 @@ export default {
           updated_at: currentTime
         })
       )
-      .then((user) => {
-        user = user.get({ plain: true });
+      .then(() =>
         res.status(statusCodes.CREATED).json({
-          msg: "User has been created",
-          user: {
-            id: user.id,
-            email: user.email,
-            login: user.login,
-            permissions: user.permissions,
-            created_at: +user.created_at,
-            updated_at: +user.updated_at
-          }
-        });
-      })
+          msg: "User has been created"
+        })
+      )
       .catch((err) =>
         res.status(statusCodes.BAD_REQUEST).json({
           msg: err
@@ -57,25 +46,44 @@ export default {
   },
 
   changePassword: async (req: TUser, res) => {
-    const { password, confirmPassword } = req.body;
-    // todo добавить смену токена
-    validatePassword(password)
-      .then(() => validateComparePassword(password, confirmPassword))
-      .then(() => DB.User.findById(14))
-      .then(async (user) => {
-        user.password = await hashPassword(password);
-        user.save();
-      })
-      .then(() =>
-        res.status(statusCodes.OK).json({
-          msg: "Password has been changed"
-        })
-      )
-      .catch((err) =>
-        res.json({
-          msg: err
-        })
+    try {
+      const { newUserPassword, currentUserPassword } = req.body;
+
+      await validatePassword(currentUserPassword);
+
+      const { sessionKey, userId } = req.decoded;
+      const user = await DB.User.findByPk(userId);
+
+      const verify = await verifyPassword(currentUserPassword, user.password);
+
+      if (!verify) throw new HttpError("Wrong password", statusCodes.FORBIDDEN);
+
+      user.password = await hashPassword(newUserPassword);
+      user.save();
+
+      await redisDelAsync(sessionKey);
+
+      const { token, expiresAt } = await generateJWT(
+        {
+          userPermissions: user.permissions,
+          userLogin: user.login,
+          userId: user.id
+        },
+        user.token_lifetime
       );
+
+      return res.status(statusCodes.OK).json({
+        msg: "Password has been changed",
+        authorizationToken: {
+          token,
+          expiresAt
+        }
+      });
+    } catch ({ msg, status }) {
+      return res.status(status).json({
+        msg
+      });
+    }
   },
 
   logout: (req, res) => {
@@ -122,24 +130,31 @@ export default {
 
         const currentTime: Date = new Date();
 
-        const isVerifyPassword: boolean = await verifyPassword(password, user);
+        const isVerifyPassword: boolean = await verifyPassword(
+          password,
+          user.password
+        );
 
         user.last_login_attempt = +currentTime;
         await user.save();
 
         if (isVerifyPassword) {
-          const payload = {
-            userPermissions: user.permissions,
-            userLogin: user.login,
-            userId: user.id
-          };
-
           const { token, expiresAt } = await generateJWT(
-            payload,
+            {
+              userPermissions: user.permissions,
+              userLogin: user.login,
+              userId: user.id
+            },
             user.token_lifetime
           );
 
-          authorizationComplete({ token, expiresAt });
+					res.json({
+						msg: "Authentication successful!",
+						authorizationToken: {
+							token,
+							expiresAt
+						}
+					});
         } else {
           throw new HttpError(
             "Incorrect login or password",
@@ -152,15 +167,5 @@ export default {
         });
       }
     })();
-
-    const authorizationComplete = (result) => {
-      res.json({
-        msg: "Authentication successful!",
-        authorizationToken: {
-          token: result.token,
-          expiresAt: result.expiresAt
-        }
-      });
-    };
   }
 };

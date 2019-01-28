@@ -1,12 +1,22 @@
 import { redisSetAsync } from "../config/redis";
+import Config from "../config";
 import jwt from "jsonwebtoken";
 import uuid from "uuid/v4";
 
-type TTokenPayload = {
-  [key: string]: any;
+// export type TUser = {
+// 	permissions: string
+// 	login: string
+// 	id: number
+// }
+
+export type TTokenPayload = {
+  sessionKey?: string;
+  userPermissions: string;
+  userLogin: string;
+  userId: number;
 };
 
-type TToken = {
+export type TToken = {
   token: string;
   expiresAt: number;
 };
@@ -16,7 +26,7 @@ export const generateSessionKey = (userId: number): string =>
 
 export const generateJWT = (
   payload: TTokenPayload,
-  lifeTime: number
+  lifeTime: number = Number(Config.jwt_lifetime)
 ): Promise<TToken> =>
   new Promise((resolve, reject) => {
     const tokenLifeTime: number = Number(lifeTime);
