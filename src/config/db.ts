@@ -20,6 +20,7 @@ const sequelize = new Sequelize(
 );
 import FileModel from "../models/File";
 import UserModel from "../models/User";
+import ProfileModel from "../models/Profile";
 
 sequelize
   .authenticate()
@@ -32,5 +33,6 @@ sequelize
 
 export default {
   File: FileModel(sequelize, Sequelize),
-  User: UserModel(sequelize, Sequelize)
+  User: UserModel(sequelize, Sequelize),
+  Profile: ProfileModel(sequelize, Sequelize)
 };

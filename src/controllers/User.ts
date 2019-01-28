@@ -28,31 +28,43 @@ export default {
       .catch(() => res.status(statusCodes.INTERNAL_SERVER_ERROR).send());
   },
 
-  createUser: (req: TUser, res) => {
+  createUser: async (req: TUser, res) => {
     const { login, email, password } = req.body;
     const currentTime = +new Date();
 
-    validateUserData({ login, email, password })
-      .then(() => hashPassword(password))
-      .then((hash) =>
-        DB.User.create({
-          login,
-          email,
-          password: hash,
-          created_at: currentTime,
-          updated_at: currentTime
+    try {
+      await DB.User.findAll({ where: { email } })
+        .then((user) => {
+          if (user.length !== 0)
+            throw new HttpError('User already exists', statusCodes.UNPROCESSABLE_ENTITY);
         })
-      )
-      .then(() =>
-        res.status(statusCodes.CREATED).json({
-          msg: "User has been created"
+
+      await validateUserData({ login, email, password })
+        .catch(() => res.status(statusCodes.BAD_REQUEST).json({
+          msg: 'User Validation Error'
+        }));
+
+      const hash = await hashPassword(password);
+
+      await DB.User.create({
+        login,
+        email,
+        password: hash,
+        created_at: currentTime,
+        updated_at: currentTime
+      });
+
+      return res.status(statusCodes.CREATED).json({
+        msg: "User has been created"
+      })
+
+    } catch (err) {
+      if (err.msg && err.status) {
+        return res.status(err.status).json({
+          msg: err.msg
         })
-      )
-      .catch((err) =>
-        res.status(statusCodes.BAD_REQUEST).json({
-          msg: err
-        })
-      );
+      }
+    }
   },
 
   resetPassword: (req, res) => {},
@@ -97,10 +109,12 @@ export default {
           expiresAt
         }
       });
-    } catch ({ msg, status }) {
-      return res.status(status).json({
-        msg
-      });
+    } catch (err) {
+      if (err.msg && err.status) {
+        return res.status(err.status).json({
+          msg: err.msg
+        })
+      }
     }
   },
 
@@ -198,9 +212,11 @@ export default {
           throw new HttpError("Incorrect login or password", statusCodes.FORBIDDEN);
         }
       } catch (err) {
-        res.status(err.status).json({
-          msg: err.msg
-        });
+        if (err.msg && err.status) {
+          return res.status(err.status).json({
+            msg: err.msg
+          })
+        }
       }
     })();
   }
