@@ -51,3 +51,27 @@ To call a script, simply run `yarn <script-name>` from the command line.
 | `prettier:ts`  | Runs Prettier on project files with file extension: `.ts`, `.tsx` |
 | `prettier:js`  | Runs Prettier on project files with file extension: `.js`, `.jsx` |
 | `prettier:json` | Runs Prettier on project files with file extension: `.json` |
+
+### Sequelize command
+
+| Script | Description |
+| ------------------------- | ------------------------------------------------------------------------------------------------- |
+| db:migrate                       | Run pending migrations|
+| db:migrate:schema:timestamps:add | Update migration table to have timestamps|
+| db:migrate:status                | List the status of all migrations|
+| db:migrate:undo                  | Reverts a migration|
+| db:migrate:undo:all              | Revert all migrations ran|
+| db:seed                          | Run specified seeder|
+| db:seed:undo                     | Deletes data from the database|
+| db:seed:all                      | Run every seeder|
+| db:seed:undo:all                 | Deletes data from the database|
+| db:create                        | Create database specified by configuration|
+| db:drop                          | Drop database specified by configuration|
+| init                             | Initializes project|
+| init:config                      | Initializes configuration|
+| init:migrations                  | Initializes migrations|
+| init:models                      | Initializes models|
+| init:seeders                     | Initializes seeders|
+| migration:generate               | Generates a new migration file|
+| model:generate                   | Generates a model and its migration|
+| seed:generate                    | Generates a new seed file          |
